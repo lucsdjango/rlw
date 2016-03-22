@@ -1,0 +1,130 @@
+{% load staticfiles %}
+
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+
+<body>
+{{txt.description}}
+{% for p in txt.pages.all %}
+<p class="tp" id={{p.idx}} startTime={{p.startTime}} style="display: none;">{{p.txt}}</p>
+{% endfor %}
+<div id="container" style="font-family: Sans-serif; font-size: 24px; position: relative; width: 600px; height: 400px; margin-left: auto; margin-right: auto;">
+	{% if group == "audio" %}
+	<audio id="aud">
+		{% with 'rlw/'|add:txt.audio as audio_static %}
+			<source src='{% static audio_static %}?{% now "U" %}' type="audio/wav">
+		{% endwith %}
+		
+		Your browser does not support the audio tag.
+		
+	</audio>
+	<div id="inner" style="height: 100%; border-style: solid; border-width: 2px; padding: 5px;">
+		<div id="prevText" style="color: #f8f8f8; width: 100%; height: 30%;">..</div>
+		<div id="displText" style="color: #000000; width: 100%;">..</div>
+		<div id="nextText" style="color: #f8f8f8; width: 100%;">..</div>
+	</div>
+	{% endif %}
+	{% if group == "video" %}
+	<video id="aud" width="100%" height="100%" type="video/mp4" preload="auto">
+		{% with 'rlw/'|add:txt.video as audio_static %}
+			<source src='{% static audio_static %}'>
+		{% endwith %}
+		
+		Your browser does not support the audio tag.
+		
+	</video>
+{% endif %}
+	
+	<form>
+		<input id="slider" type="range" name="points" min="0" max="{{txt.pages.all|length|add:-1}}" step="0.01" style="-webkit-appearance: none; width: 100%; bottom:0;" >
+
+	</form>
+</div>
+
+
+
+	<script type="text/javascript" src="{% static "rlw/jquery-1.9.1.js" %}"></script>
+	
+	<script>
+		
+		var pageIdx;
+		var startTime;
+		var endTime;
+		var aud;
+		var vid;
+		
+		
+		function changePage(idx) {
+			pageIdx = idx;
+			startTime = $('#'+idx).attr("startTime");
+			endTime = $('#'+(idx+1)).attr("startTime");
+			$('#prevText').text($('#'+(idx-1)).text());
+			$('#displText').text($('#'+idx).text());
+			$('#nextText').text($('#'+(idx+1)).text());
+			
+			aud.pause();
+			console.log("startTime: " + startTime);
+			console.log("endTime: " + endTime);
+			aud.currentTime = startTime;
+			console.log(aud.currentTime);
+			
+			aud.play();
+			
+			
+			
+			
+		}
+		
+		$( document ).ready(function() {
+		
+			
+			aud = $("#aud").get(0);
+			$('#slider').val(0);
+			
+			aud.ontimeupdate = function() {
+				
+				var offset =(aud.currentTime-startTime)/(endTime-startTime);
+				if(offset>1) changePage(pageIdx+1);
+				$('#slider').val(pageIdx + offset);
+				//console.log(pageIdx + " " + offset + " " + aud.currentTime + " " + $('#slider').val());
+			}
+			
+			$("#aud").on('loadedmetadata', function(){
+				aud.play();
+				console.log("canplay");
+				changePage(0);
+			});
+			
+			$("#aud").on('loadeddata', function(){
+				aud.play();
+				console.log("canplay");
+				changePage(0);
+			});
+			
+			
+			$('#slider').on('change', function(){
+				var idx = Math.floor($('#slider').val());
+				changePage(idx);
+				//console.log(idx);
+				
+				
+			});
+			aud.load();
+		});
+		
+		
+		
+		$('audio').on('ended',function(){
+			console.log("audio ended");
+		});
+		
+		
+	</script>
+
+{% if group == "audio" %}
+
+{% endif %}
+</body>
+</html>
